@@ -68,9 +68,17 @@ print(note2freq)
 def play_tune(notes,ms=1000):
     global note2freq
     for note in notes:
-        play_for(sine_wave(note2freq[note], 4096),ms)
+        if isinstance(note, str): #Checks if the note is a single note
+            play_for(sine_wave(note2freq[note], 4096),ms)
+        elif isinstance(note, list): # Checks if the note is a chord
+            chord_waveform = numpy.zeros(4096, dtype=numpy.int16)  # initialize a numpy array of zeros
+            for n in note:
+                waveform = sine_wave(note2freq[n], 4096)  # generate each note's waveform 
+                chord_waveform += waveform  # add the waveform to the chord
+            play_for(chord_waveform, ms)
 
-#play_tune(["C4","C4","D4","C4","F4","E4","C4","C4","D4","C4","G4","F4"],300)
+play_tune(["C4","C4","D4","C4","F4","E4","C4","C4","D4","C4","G4","F4"],300)
+play_tune(["C4", ["C4", "E4", "G4"], "D4"], 300)
 
 # Play a chord by note name
 #play_for(sum([sine_wave(note2freq[note], 4096) for note in ["C4","E4","G4"]]), 1000) # C Major
@@ -118,7 +126,7 @@ def load_cds_csv(filepath):
     return note_strings    
 
 # Plays Joy to the World
-play_tune(load_cds_csv("CSD/english/csv/en022a.csv"),200)
+# play_tune(load_cds_csv("CSD/english/csv/en022a.csv"),200)
 
 # Something's wrong with the below. Need to debug at some point.  It
 # came from the original web site (as at top) but seems to be broken.
@@ -154,3 +162,4 @@ def major_triad(hz, waveform=None):
     return make_chord(hz, [4, 5, 6], waveform)
 
 #play_for(major_triad(440, square_wave), length)
+
