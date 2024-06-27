@@ -71,14 +71,21 @@ def play_tune(notes,ms=1000):
         if isinstance(note, str): #Checks if the note is a single note
             play_for(sine_wave(note2freq[note], 4096),ms)
         elif isinstance(note, list): # Checks if the note is a chord
-            chord_waveform = numpy.zeros(4096, dtype=numpy.int16)  # initialize a numpy array of zeros
-            for n in note:
-                waveform = sine_wave(note2freq[n], 4096)  # generate each note's waveform 
-                chord_waveform += waveform  # add the waveform to the chord
-            play_for(chord_waveform, ms)
+            play_for(sum([sine_wave(note2freq[note], 4096) for note in note]), ms)
+        else:
+            raise Exception(note)
 
-play_tune(["C4","C4","D4","C4","F4","E4","C4","C4","D4","C4","G4","F4"],300)
-play_tune(["C4", ["C4", "E4", "G4"], "D4"], 300)
+#play_tune(["C4","C4","D4","C4","F4","E4","C4","C4","D4","C4","G4","F4"],300)
+#play_tune(["C4", ["C4", "E4", "G4"], "D4"], 300)
+# https://www.researchgate.net/figure/Bach-Fugue-No-22-in-B-minor-The-subject-is-stated-in-the-soprano-in-measures-55-57_fig5_277972990
+play_tune(
+    [
+        ["EF5","BF4","EF4", "GF3", "EF3"],
+        "F3",
+        ["EF4","BF4","EF4", "GF3"],
+        ["F3","AF3"],
+        ["GF3","BF3"]
+    ]) 
 
 # Play a chord by note name
 #play_for(sum([sine_wave(note2freq[note], 4096) for note in ["C4","E4","G4"]]), 1000) # C Major
