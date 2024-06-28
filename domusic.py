@@ -81,10 +81,14 @@ def play_tune(notes,ms=1000):
 play_tune(
     [
         ["EF5","BF4","EF4", "GF3", "EF3"],
-        "F3",
+        ["EF5","BF4","EF4", "EF3","F3"],
         ["EF4","BF4","EF4", "GF3"],
-        ["F3","AF3"],
-        ["GF3","BF3"]
+        ["EF4","BF4","F3","AF3"],
+        #
+        ["GF3","BF3"],
+        ["GF3","C3","DF5","F5"],
+        ["GF3","EF3","C5","EF5"],
+        ["GF3","EF3","BF4","DF5"]
     ]) 
 
 # Play a chord by note name
