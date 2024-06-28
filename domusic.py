@@ -26,6 +26,7 @@ for note in note_names:
         flattened_note_names.append(note[0])
     else:
         flattened_note_names.append(note)
+print(len(flattened_note_names))
 
 # Base value for the first note
 BASE = 48
@@ -106,18 +107,18 @@ def play_tune(notes,ms=1000):
 # https://www.researchgate.net/figure/Bach-Fugue-No-22-in-B-minor-The-subject-is-stated-in-the-soprano-in-measures-55-57_fig5_277972990
 # https://www.bachcentral.com/midiindexcomplete.html
 
-play_tune(
-    [
-        ["EF5","BF4","EF4", "GF3", "EF3"],
-        ["EF5","BF4","EF4", "EF3","F3"],
-        ["EF4","BF4","EF4", "GF3"],
-        ["EF4","BF4","F3","AF3"],
-        #
-        ["GF3","BF3"],
-        ["GF3","C3","DF5","F5"],
-        ["GF3","EF3","C5","EF5"],
-        ["GF3","EF3","BF4","DF5"]
-    ]) 
+# play_tune(
+#     [
+#         ["EF5","BF4","EF4", "GF3", "EF3"],
+#         ["EF5","BF4","EF4", "EF3","F3"],
+#         ["EF4","BF4","EF4", "GF3"],
+#         ["EF4","BF4","F3","AF3"],
+#         #
+#         ["GF3","BF3"],
+#         ["GF3","C3","DF5","F5"],
+#         ["GF3","EF3","C5","EF5"],
+#         ["GF3","EF3","BF4","DF5"]
+#     ]) 
 
 # Play a chord by note name
 #play_for(sum([sine_wave(note2freq[note], 4096) for note in ["C4","E4","G4"]]), 1000) # C Major
@@ -143,8 +144,25 @@ def load_cds_csv(filepath):
                     continue
     return note_strings    
 
+def load_cds_csv_numbers(filepath):
+    note_strings = []
+    with open(filepath, 'r') as file:
+        reader = csv.reader(file)
+        for row in reader:
+            if len(row) > 2:
+                try:
+                    number = int(row[2])
+                    note_name = get_note_name(number)
+                    if note_name:
+                        note_strings.append(number)
+                except ValueError:
+                    # Handle the case where conversion to integer fails
+                    continue
+    return note_strings    
+
 # Plays Joy to the World
-play_tune(load_cds_csv("CSD/english/csv/en022a.csv"),200)
+print(load_cds_csv_numbers("CSD/english/csv/en022a.csv"))
+#play_tune(load_cds_csv("CSD/english/csv/en022a.csv"),200)
 
 # Something's wrong with the below. Need to debug at some point.  It
 # came from the original web site (as at top) but seems to be broken.
