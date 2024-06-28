@@ -1,7 +1,6 @@
 #Comment Test 
 
-# ToDo: Make this interpret chords, as:
-#    play_tune(["C1",["C1","E1","G1"],"EF2",["C1","EF1","G1"],...],300)
+# ToDo: Program Midi (file) -> notes converter
 
 # Adapted from: https://shallowsky.com/blog/programming/python-play-chords.html
 
@@ -78,6 +77,8 @@ def play_tune(notes,ms=1000):
 #play_tune(["C4","C4","D4","C4","F4","E4","C4","C4","D4","C4","G4","F4"],300)
 #play_tune(["C4", ["C4", "E4", "G4"], "D4"], 300)
 # https://www.researchgate.net/figure/Bach-Fugue-No-22-in-B-minor-The-subject-is-stated-in-the-soprano-in-measures-55-57_fig5_277972990
+# https://www.bachcentral.com/midiindexcomplete.html
+
 play_tune(
     [
         ["EF5","BF4","EF4", "GF3", "EF3"],
