@@ -6,14 +6,10 @@ import mido
 def midi2text(ifile,ofile):
     i = mido.MidiFile(ifile)
     o = open(ofile,'w')
-    output = ''
     for track in i.tracks:
-        print(track)
+        o.write("\n===== Track =====\n")
         for msg in track:
-            #print(msg)
-            if msg.type == 'note_on':
-                output += str(msg.note) + ','
-    o.write(output[:-1])
+            o.write(str(msg)+"\n")
     o.close()
 
-    
+midi2text("Fugue22.mid", "Fugue22.txt")
