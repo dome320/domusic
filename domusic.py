@@ -1,10 +1,65 @@
-#Comment Test 
+import numpy
+import scipy.signal
+import pygame, pygame.sndarray
+import csv
+import mido
 
-# ToDo: Program Midi (file) -> notes converter
+# ================== SETUP NOTES ==================
+
+# Decoder for .csv files from: https://zenodo.org/records/4916302
+# I think that C4 = 60 (Middle C), so C3 = 48
+# According to: https://inspiredacoustics.com/en/MIDI_note_numbers_and_center_frequencies
+
+global note_names
+global notes
+global note2freq
+
+note2freq = {}
+note_names = ["C3", ["CS3", "DF3"], "D3", ["DS3", "EF3"], "E3", "F3", ["FS3", "GF3"], "G3", ["GS3", "AF3"], "A3", ["AS3", "BF3"], "B3",
+              "C4", ["CS4", "DF4"], "D4", ["DS4", "EF4"], "E4", "F4", ["FS4", "GF4"], "G4", ["GS4", "AF4"], "A4", ["AS4", "BF4"], "B4",
+              "C5", ["CS5", "DF5"], "D5", ["DS5", "EF5"], "E5", "F5", ["FS5", "GF5"], "G5", ["GS5", "AF5"], "A5", ["AS5", "BF5"], "B5",
+              "C6"]
+# Flatten the note_names list, using only the first entry of sublists
+flattened_note_names = []
+for note in note_names:
+    if isinstance(note, list):
+        flattened_note_names.append(note[0])
+    else:
+        flattened_note_names.append(note)
+
+# Base value for the first note
+BASE = 48
+
+# Function to map number to note name
+def get_note_name(number):
+    index = number - BASE
+    if 0 <= index < len(flattened_note_names):
+        return flattened_note_names[index]
+    else:
+        return None
+
+# Label the three octaves around middle C (C4). 
+
+def setup_notes():
+    global note2freq
+    c0 = 130.81
+    n = 0
+    for note_name in note_names:
+        f = c0*(2**(n/12))
+        if (isinstance(note_name, str)):
+            note2freq[note_name]=f
+        else:
+            note2freq[note_name[0]]=f
+            note2freq[note_name[1]]=f
+        n = n + 1
+    
+setup_notes()
+print(note2freq)
+
+# ================== PLAYER ==================
 
 # Adapted from: https://shallowsky.com/blog/programming/python-play-chords.html
 
-import pygame, pygame.sndarray
 pygame.mixer.init(channels=1)
 
 def play_for(sample_wave, ms):
@@ -13,9 +68,6 @@ def play_for(sample_wave, ms):
     sound.play(-1)
     pygame.time.delay(ms)
     sound.stop()
-
-import numpy
-import scipy.signal
 
 sample_rate = 44100
 
@@ -34,31 +86,6 @@ def sine_wave(hz, peak, n_samples=sample_rate):
 
 # Chords
 #play_for(sum([sine_wave(440, 4096), sine_wave(880, 4096)]), 1000)
-
-# Label the three octaves around middle C (C4). 
-
-note_names = ["C3", ["CS3", "DF3"], "D3", ["DS3", "EF3"], "E3", "F3", ["FS3", "GF3"], "G3", ["GS3", "AF3"], "A3", ["AS3", "BF3"], "B3",
-              "C4", ["CS4", "DF4"], "D4", ["DS4", "EF4"], "E4", "F4", ["FS4", "GF4"], "G4", ["GS4", "AF4"], "A4", ["AS4", "BF4"], "B4",
-              "C5", ["CS5", "DF5"], "D5", ["DS5", "EF5"], "E5", "F5", ["FS5", "GF5"], "G5", ["GS5", "AF5"], "A5", ["AS5", "BF5"], "B5",
-              "C6"]
-global notes
-note2freq = {}
-
-def setup_notes():
-    global note2freq
-    c0 = 130.81
-    n = 0
-    for note_name in note_names:
-        f = c0*(2**(n/12))
-        if (isinstance(note_name, str)):
-            note2freq[note_name]=f
-        else:
-            note2freq[note_name[0]]=f
-            note2freq[note_name[1]]=f
-        n = n + 1
-    
-setup_notes()
-print(note2freq)
 
 # Simple version doesn't handle playing chords.
 # ToDo: Make this interpret chords, as:
@@ -100,27 +127,6 @@ play_tune(
 # I think that C4 = 60 (Middle C), so C3 = 48
 # According to: https://inspiredacoustics.com/en/MIDI_note_numbers_and_center_frequencies
 
-# Flatten the note_names list, using only the first entry of sublists
-flattened_note_names = []
-for note in note_names:
-    if isinstance(note, list):
-        flattened_note_names.append(note[0])
-    else:
-        flattened_note_names.append(note)
-
-# Base value for the first note
-BASE = 48
-
-# Function to map number to note name
-def get_note_name(number):
-    index = number - BASE
-    if 0 <= index < len(flattened_note_names):
-        return flattened_note_names[index]
-    else:
-        return None
-
-import csv
-
 def load_cds_csv(filepath):
     note_strings = []
     with open(filepath, 'r') as file:
@@ -138,7 +144,7 @@ def load_cds_csv(filepath):
     return note_strings    
 
 # Plays Joy to the World
-# play_tune(load_cds_csv("CSD/english/csv/en022a.csv"),200)
+play_tune(load_cds_csv("CSD/english/csv/en022a.csv"),200)
 
 # Something's wrong with the below. Need to debug at some point.  It
 # came from the original web site (as at top) but seems to be broken.
@@ -174,4 +180,20 @@ def major_triad(hz, waveform=None):
     return make_chord(hz, [4, 5, 6], waveform)
 
 #play_for(major_triad(440, square_wave), length)
+
+# ================== MIDI UTILS ==================
+
+# Code to convert a midi (.mdi) file into our note system.
+# We first convert each track into an array of 
+
+def midi2text(ifile,ofile):
+    i = mido.MidiFile(ifile)
+    o = open(ofile,'w')
+    for track in i.tracks:
+        o.write("\n===== Track =====\n")
+        for msg in track:
+            o.write(str(msg)+"\n")
+    o.close()
+
+midi2text("Fugue22.mid", "Fugue22.txt")
 
