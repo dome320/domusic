@@ -225,3 +225,31 @@ def midi2text(ifile,ofile):
 
 midi2text("Fugue22.mid", "Fugue22.txt")
 
+markov_chain = numpy.full((38, 38), 1/38)
+flattened_note_names.append("*") #Set the end token to be zero 
+note_to_index = {note: idx for idx, note in enumerate(flattened_note_names)} # dictionary corrisponding to each note and its index 
+
+def train_markov_chain(notes):
+    global markov_chain 
+    for i in range(len(notes) - 1): 
+        from_note = notes[i] 
+        to_note = notes[i+1]
+        from_index = note_to_index[from_note]
+        to_index = note_to_index[to_note]
+        markov_chain[from_index][to_index] += 1
+
+        last_note = notes[-1]
+        last_index = note_to_index[last_note]
+        end_index = note_to_index["*"]
+        markov_chain[last_index][end_index] += 1
+
+notes = ["C4", "E4", "G4", "C4", "*"]
+train_markov_chain(notes)
+
+def normalize(matrix):
+    for i in range(len(matrix)):
+        total = numpy.sum(matrix[i])
+        if total > 0:
+            matrix[i] /= total
+
+normalize(markov_chain)
