@@ -26,7 +26,7 @@ for note in note_names:
         flattened_note_names.append(note[0])
     else:
         flattened_note_names.append(note)
-print(len(flattened_note_names))
+#print(len(flattened_note_names))
 
 # Base value for the first note
 BASE = 48
@@ -55,7 +55,7 @@ def setup_notes():
         n = n + 1
     
 setup_notes()
-print(note2freq)
+#print(note2freq)
 
 # ================== PLAYER ==================
 
@@ -161,7 +161,7 @@ def load_cds_csv_numbers(filepath):
     return note_strings    
 
 # Plays Joy to the World
-print(load_cds_csv_numbers("CSD/english/csv/en022a.csv"))
+#print(load_cds_csv_numbers("CSD/english/csv/en022a.csv"))
 #play_tune(load_cds_csv("CSD/english/csv/en022a.csv"),200)
 
 # Something's wrong with the below. Need to debug at some point.  It
@@ -201,8 +201,18 @@ def major_triad(hz, waveform=None):
 
 # ================== MIDI UTILS ==================
 
-# Code to convert a midi (.mdi) file into our note system.
-# We first convert each track into an array of 
+# Code to convert a midi (.mdi) file into our note system.  This
+# processes a single track, so you need to grab a track from the mid
+# file. At the moment, just to make things simple, we convert the
+# first track and drop the rest. (Actually, it's the second track
+# since the first track is always metadata).
+
+def midi1(ifile,track=1):
+    i = mido.MidiFile(ifile)
+    for msg in i.tracks[track]:
+        print(str(msg.dict()))
+
+#midi1("Fugue22.mid",1)
 
 def midi2text(ifile,ofile):
     i = mido.MidiFile(ifile)
