@@ -246,27 +246,13 @@ def train_markov_chain(notes):
         from_index = note_to_index[from_note]
         to_index = note_to_index[to_note]
         markov_chain[from_index][to_index] += 1 # <------- Use the lenvar (38) above and make this 1/lenvar
+    last_note = notes[-1]
+    last_index = note_to_index[last_note]
+    end_index = note_to_index["*"]
+    markov_chain[last_index][end_index] += 1 # <------- as above
 
-        last_note = notes[-1]
-        last_index = note_to_index[last_note]
-        end_index = note_to_index["*"]
-        markov_chain[last_index][end_index] += 1 # <------- as above
-
-# ---------> I'm a bit confused. On the one hand, I don't think you
-# ---------> need the "*" at the end because your code handles that,
-# ---------> but on the other hand, if you remove the "*", then the
-# ---------> sucession values are different. Try running with each of
-# ---------> these in alternatively and look at the rows for C4 and
-# ---------> *. With * included, the C4 successor values are the same
-# ---------> (0.34210526), which is right, but there's a successor for
-# ---------> *, which is wrong (well, it doesn't hurt cause you stop
-# ---------> at *, but it's weird.), and weirdly it's a different
-# ---------> value from the sucessor for the other singletons. But if
-# ---------> you take the * off, then the sucession values for C4 are
-# ---------> there, but different! ???? 
-
-notes = ["C4", "E4", "G4", "C4", "*"]
-#notes = ["C4", "E4", "G4", "C4"]
+#notes = ["C4", "E4", "G4", "C4", "*"] # <------- * isn't needed
+notes = ["C4", "E4", "G4", "C4"]
 
 train_markov_chain(notes)
 
