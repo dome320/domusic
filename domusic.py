@@ -213,7 +213,7 @@ def midi2text(ifile,ofile):
             o.write(str(msg)+"\n")
     o.close()
 
-# midi2text("Fugue22.mid", "Fugue22.txt")
+midi2text("Fugue22.mid", "Fugue22.txt")
 
 markov_chain = numpy.full((38, 38), 1/38)
 flattened_note_names.append("*") #Set the end token to be zero 
