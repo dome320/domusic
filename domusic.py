@@ -232,11 +232,18 @@ def midi2text(ifile,ofile):
 # ---------> array, or markov array if you like). The markov chain is
 # ---------> a path through the space represented by the array. But
 # ---------> whatever :-)
+<<<<<<< HEAD
 flat_len = len(flattened_note_names)
 markov_chain = numpy.full((flat_len, flat_len), 1/flat_len) 
 flattened_note_names.append("0") # Set the end token to be zero
 
 # dictionary corresponding to each note and its index 
+=======
+markov_chain = numpy.full((38, 38), 1/38) 
+flattened_note_names.append("*") #Set the end token to be zero  <------ I think this will go on the end -- prob ok.
+
+# dictionary corrisponding to each note and its index 
+>>>>>>> ff01a3943157b3094e41cb733974010d85a6835f
 note_to_index = {note: idx for idx, note in enumerate(flattened_note_names)} 
 
 def train_markov_chain(notes):
@@ -246,6 +253,7 @@ def train_markov_chain(notes):
         to_note = notes[i+1]
         from_index = note_to_index[from_note]
         to_index = note_to_index[to_note]
+<<<<<<< HEAD
         markov_chain[from_index][to_index] += 1 / flat_len
     last_note = notes[-1]
     last_index = note_to_index[last_note]
@@ -253,6 +261,15 @@ def train_markov_chain(notes):
     markov_chain[last_index][end_index] += 1 / flat_len
 
 #notes = ["C4", "E4", "G4", "C4"] # * isn't needed
+=======
+        markov_chain[from_index][to_index] += 1 # <------- Use the lenvar (38) above and make this 1/lenvar
+    last_note = notes[-1]
+    last_index = note_to_index[last_note]
+    end_index = note_to_index["*"]
+    markov_chain[last_index][end_index] += 1 # <------- as above
+
+#notes = ["C4", "E4", "G4", "C4", "*"] # <------- * isn't needed
+>>>>>>> ff01a3943157b3094e41cb733974010d85a6835f
 notes = ["C4", "E4", "G4", "C4"]
 
 train_markov_chain(notes)
@@ -268,6 +285,7 @@ normalize(markov_chain)
 for note in notes:
     print(note+":"+str(markov_chain[note_to_index[note]]))
 # (This will be redundant in the case that * was included in the input.)
+<<<<<<< HEAD
 print("0"+":"+str(markov_chain[note_to_index["0"]]))
 
 def generate_notes(start_note, num_notes):
@@ -292,3 +310,6 @@ def generate_notes(start_note, num_notes):
         current_note = next_note
     
     return generated_sequence
+=======
+print("*"+":"+str(markov_chain[note_to_index["*"]]))
+>>>>>>> ff01a3943157b3094e41cb733974010d85a6835f
