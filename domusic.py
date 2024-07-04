@@ -284,3 +284,8 @@ def generate_notes(num_notes):
         generated_sequence.append(next_note)
         current_note = next_note
     return generated_sequence
+
+
+generate_notes(100)
+
+print(" --- Generating done! ---")
