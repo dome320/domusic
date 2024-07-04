@@ -26,7 +26,7 @@ for note in note_names:
         flattened_note_names.append(note[0])
     else:
         flattened_note_names.append(note)
-print(len(flattened_note_names))
+#print(len(flattened_note_names))
 
 # Base value for the first note
 BASE = 48
@@ -55,7 +55,7 @@ def setup_notes():
         n = n + 1
     
 setup_notes()
-print(note2freq)
+#print(note2freq)
 
 # ================== PLAYER ==================
 
@@ -161,7 +161,7 @@ def load_cds_csv_numbers(filepath):
     return note_strings    
 
 # Plays Joy to the World
-print(load_cds_csv_numbers("CSD/english/csv/en022a.csv"))
+#print(load_cds_csv_numbers("CSD/english/csv/en022a.csv"))
 #play_tune(load_cds_csv("CSD/english/csv/en022a.csv"),200)
 
 # Something's wrong with the below. Need to debug at some point.  It
@@ -201,8 +201,18 @@ def major_triad(hz, waveform=None):
 
 # ================== MIDI UTILS ==================
 
-# Code to convert a midi (.mdi) file into our note system.
-# We first convert each track into an array of 
+# Code to convert a midi (.mdi) file into our note system.  This
+# processes a single track, so you need to grab a track from the mid
+# file. At the moment, just to make things simple, we convert the
+# first track and drop the rest. (Actually, it's the second track
+# since the first track is always metadata).
+
+def midi1(ifile,track=1):
+    i = mido.MidiFile(ifile)
+    for msg in i.tracks[track]:
+        print(str(msg.dict()))
+
+#midi1("Fugue22.mid",1)
 
 def midi2text(ifile,ofile):
     i = mido.MidiFile(ifile)
@@ -213,11 +223,21 @@ def midi2text(ifile,ofile):
             o.write(str(msg)+"\n")
     o.close()
 
-midi2text("Fugue22.mid", "Fugue22.txt")
+#midi2text("Fugue22.mid", "Fugue22.txt")
 
-markov_chain = numpy.full((38, 38), 1/38)
-flattened_note_names.append("*") #Set the end token to be zero 
-note_to_index = {note: idx for idx, note in enumerate(flattened_note_names)} # dictionary corrisponding to each note and its index 
+# ---------> Make 38 a variable that = len(flattened_notes) then use
+# ---------> this var, not the constant in the following.
+
+# ---------> (Technically this is a connectivity array, (or sucession
+# ---------> array, or markov array if you like). The markov chain is
+# ---------> a path through the space represented by the array. But
+# ---------> whatever :-)
+flat_len = len(flattened_note_names)
+markov_chain = numpy.full((flat_len, flat_len), 1/flat_len) 
+flattened_note_names.append("0") # Set the end token to be zero
+
+# dictionary corresponding to each note and its index 
+note_to_index = {note: idx for idx, note in enumerate(flattened_note_names)} 
 
 def train_markov_chain(notes):
     global markov_chain 
@@ -226,14 +246,15 @@ def train_markov_chain(notes):
         to_note = notes[i+1]
         from_index = note_to_index[from_note]
         to_index = note_to_index[to_note]
-        markov_chain[from_index][to_index] += 1
+        markov_chain[from_index][to_index] += 1 / flat_len
+    last_note = notes[-1]
+    last_index = note_to_index[last_note]
+    end_index = note_to_index["0"]
+    markov_chain[last_index][end_index] += 1 / flat_len
 
-        last_note = notes[-1]
-        last_index = note_to_index[last_note]
-        end_index = note_to_index["*"]
-        markov_chain[last_index][end_index] += 1
+#notes = ["C4", "E4", "G4", "C4"] # * isn't needed
+notes = ["C4", "E4", "G4", "C4"]
 
-notes = ["C4", "E4", "G4", "C4", "*"]
 train_markov_chain(notes)
 
 def normalize(matrix):
@@ -243,3 +264,31 @@ def normalize(matrix):
             matrix[i] /= total
 
 normalize(markov_chain)
+
+for note in notes:
+    print(note+":"+str(markov_chain[note_to_index[note]]))
+# (This will be redundant in the case that * was included in the input.)
+print("0"+":"+str(markov_chain[note_to_index["0"]]))
+
+def generate_notes(start_note, num_notes):
+    generated_sequence = [start_note]
+    current_note = start_note
+    for i in range(num_notes):
+        # Get index of current note
+        current_index = note_to_index[current_note]
+        
+        # Generate a random number to determine next note
+        rand_num = numpy.random.rand()
+        
+        # Find the next note based on the cumulative probabilities
+        cumulative_probs = numpy.cumsum(markov_chain[current_index])
+        next_index = numpy.argmax(rand_num <= cumulative_probs)
+        next_note = flattened_note_names[next_index]
+        
+        # Append the next note to the sequence
+        generated_sequence.append(next_note)
+        
+        # Update current note for next iteration
+        current_note = next_note
+    
+    return generated_sequence
