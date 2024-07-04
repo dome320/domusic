@@ -1,3 +1,5 @@
+# conda activate domusic
+
 import numpy
 import scipy.signal
 import pygame, pygame.sndarray
@@ -225,14 +227,9 @@ def midi2text(ifile,ofile):
 
 #midi2text("Fugue22.mid", "Fugue22.txt")
 
-# ---------> Make 38 a variable that = len(flattened_notes) then use
-# ---------> this var, not the constant in the following.
+print(" --- Training ---")
 
-# ---------> (Technically this is a connectivity array, (or sucession
-# ---------> array, or markov array if you like). The markov chain is
-# ---------> a path through the space represented by the array. But
-# ---------> whatever :-)  
-flat_len = len(flattened_note_names)
+flat_len = 1+len(flattened_note_names)
 markov_chain = numpy.full((flat_len, flat_len), 1 / flat_len)
 flattened_note_names.append("0") # Set the end token to be zero
 
@@ -252,9 +249,7 @@ def train_markov_chain(notes):
     end_index = note_to_index["0"]
     markov_chain[last_index][end_index] += 1 / flat_len
 
-#notes = ["C4", "E4", "G4", "C4"] # * isn't needed
 notes = ["C4", "E4", "G4", "C4"]
-
 train_markov_chain(notes)
 
 def normalize(matrix):
@@ -270,6 +265,10 @@ for note in notes:
 # (This will be redundant in the case that * was included in the input.)
 print("0"+":"+str(markov_chain[note_to_index["0"]]))
 
+print(" --- Training done! ---")
+
+print(" --- Generating ---")
+
 def generate_notes(num_notes):
     start_note = 0
     while start_note == 0:
@@ -284,5 +283,4 @@ def generate_notes(num_notes):
         next_note = flattened_note_names[next_index]
         generated_sequence.append(next_note)
         current_note = next_note
-    
     return generated_sequence
