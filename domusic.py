@@ -160,7 +160,15 @@ def load_cds_csv_numbers(filepath):
                 except ValueError:
                     # Handle the case where conversion to integer fails
                     continue
-    return note_strings    
+    return note_strings
+
+def load_multiple_files(directory):
+    all_notes = [] 
+    for filename in os.listdir(directory):
+        filepath = os.path.join(directory,filename)
+        notes = load_cds_csv(filepath)
+        all_notes.extend(notes)
+    return all_notes
 
 # Plays Joy to the World
 #print(load_cds_csv_numbers("CSD/english/csv/en022a.csv"))
@@ -281,11 +289,24 @@ def generate_notes(num_notes):
         cumulative_probs = numpy.cumsum(markov_chain[current_index])
         next_index = numpy.argmax(rand_num <= cumulative_probs)
         next_note = flattened_note_names[next_index]
+        if next_note == "0":
+            break
         generated_sequence.append(next_note)
         current_note = next_note
-    return generated_sequence
+    print(generated_sequence)
+    play_tune(generated_sequence)
 
 
-generate_notes(100)
+generate_notes(20)
 
 print(" --- Generating done! ---")
+
+
+def run_jig(directory, num_notes):
+    all_notes = load_multiple_files(directory)
+    train_markov_chain(all_notes)
+    normalize(markov_chain)
+    generate_notes(num_notes)
+
+
+# run_jig(# Not sure what directory we should put) 
