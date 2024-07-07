@@ -4,6 +4,7 @@ import numpy
 import scipy.signal
 import pygame, pygame.sndarray
 import csv
+import os
 import mido
 
 # ================== SETUP NOTES ==================
@@ -162,10 +163,11 @@ def load_cds_csv_numbers(filepath):
                     continue
     return note_strings
 
-def load_multiple_files(directory):
+def load_multiple_files(directory="CSD/english/csv"):
     all_notes = [] 
     for filename in os.listdir(directory):
         filepath = os.path.join(directory,filename)
+        print("loading from: "+filepath)
         notes = load_cds_csv(filepath)
         all_notes.extend(notes)
     return all_notes
@@ -277,7 +279,7 @@ print(" --- Training done! ---")
 
 print(" --- Generating ---")
 
-def generate_notes(num_notes):
+def generate_notes(num_notes,speed):
     start_note = 0
     while start_note == 0:
         start_note = numpy.random.choice(flattened_note_names)
@@ -294,19 +296,19 @@ def generate_notes(num_notes):
         generated_sequence.append(next_note)
         current_note = next_note
     print(generated_sequence)
-    play_tune(generated_sequence)
+    play_tune(generated_sequence,speed)
 
-
-generate_notes(20)
+#generate_notes(20)
 
 print(" --- Generating done! ---")
 
 
-def run_jig(directory, num_notes):
+def run_jig(directory, num_notes,speed):
     all_notes = load_multiple_files(directory)
     train_markov_chain(all_notes)
     normalize(markov_chain)
-    generate_notes(num_notes)
+    print(markov_chain)
+    generate_notes(num_notes,speed)
 
+run_jig("CSD/english/csv/",100,200) 
 
-# run_jig(# Not sure what directory we should put) 
