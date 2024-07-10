@@ -289,35 +289,56 @@ print(" --- Training done! ---")
 
 print(" --- Generating ---")
 
-def generate_notes(num_notes,speed):
-    start_note = 0
+def generate_notes(num_notes,speed,temp):
+    start_note = 0 
     while start_note == 0:
         start_note = numpy.random.choice(flattened_note_names)
     generated_sequence = [start_note]
     current_note = start_note
-    for i in range(num_notes):
+    for _ in range(num_notes):
         current_index = note_to_index[current_note]
+        probs = markov_chain[current_index]
+
+        #Sort probabilities
+        sorted_indices = list(reversed(numpy.argsort(probs)))
+
+        # Select next state
+        cumulative_probs = numpy.cumsum(probs[sorted_indices])
         rand_num = numpy.random.rand()
-        cumulative_probs = numpy.cumsum(markov_chain[current_index])
-        next_index = numpy.argmax(rand_num <= cumulative_probs)
-        next_note = flattened_note_names[next_index]
+        candidate_index = 0
+        for i in range (len(cumulative_probs)):
+            if rand_num >= cumulative_probs[i]:
+                candidate_index = i
+                break
+
+        # Add variability with temperature
+        mean_index = sorted_indices[candidate_index]
+        new_index = int(numpy.random.normal(mean_index, temp))
+
+        # Check bounds
+        if new_index < 0:
+            new_index = 0
+        elif new_index >= len(flattened_note_names):
+            new_index = len(flattened_note_names) - 1
+            
+        next_note = flattened_note_names[new_index]
         if next_note == "0":
             break
+
         generated_sequence.append(next_note)
         current_note = next_note
-    print(generated_sequence)
-    play_tune(generated_sequence,speed)
 
-#generate_notes(20)
+    print(generated_sequence)
+    play_tune(generated_sequence)
+
 
 print(" --- Generating done! ---")
 
-
-def run_jig(directory, num_notes,speed):
+def run_jig(directory, num_notes, speed, temp):
     all_notes = load_multiple_files(directory)
     train_markov_chain(all_notes)
     normalize(markov_chain)
     print(markov_chain)
-    generate_notes(num_notes,speed)
+    generate_notes(num_notes,speed,temp)
 
-run_jig("CSD/english/csv/",100,200) 
+run_jig("CSD/english/csv/",100,200, 1) 
