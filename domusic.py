@@ -147,6 +147,7 @@ def load_cds_csv(filepath):
                 except ValueError:
                     # Handle the case where conversion to integer fails
                     continue
+    note_strings.append("0") 
     return note_strings    
 
 def load_cds_csv_numbers(filepath):
