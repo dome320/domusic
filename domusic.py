@@ -131,6 +131,8 @@ def play_tune(notes,ms=1000):
 # I think that C4 = 60 (Middle C), so C3 = 48
 # According to: https://inspiredacoustics.com/en/MIDI_note_numbers_and_center_frequencies
 
+
+    
 def load_cds_csv(filepath):
     note_strings = []
     with open(filepath, 'r') as file:
@@ -260,6 +262,13 @@ def train_markov_chain(notes):
     markov_chain[last_index][end_index] += 1 / flat_len
 
 notes = ["C4", "E4", "G4", "C4"]
+notes.extend(["C4", "D4", "E4", "F4", "G4", "A4", "B4", "C5"]) # C major
+notes.extend(["D4", "E4", "FS4", "G4", "A4", "B4", "CS5", "D5"])  # D major
+notes.extend(["E4", "FS4", "GS4", "A4", "B4", "CS5", "DS5", "E5"])  # E major
+notes.extend(["F4", "G4", "A4", "AS4", "C5", "D5", "E5", "F5"])  # F major
+notes.extend(["G4", "A4", "B4", "C5", "D5", "E5", "FS5", "G5"]) # G major
+notes.extend(["A4", "B4", "CS5", "D5", "E5", "FS5", "GS5", "A5"]) # A major
+notes.extend(["B4", "CS5", "DS5", "E5", "FS5", "GS5", "AS5", "B5"])  # B major
 train_markov_chain(notes)
 
 def normalize(matrix):
@@ -311,4 +320,3 @@ def run_jig(directory, num_notes,speed):
     generate_notes(num_notes,speed)
 
 run_jig("CSD/english/csv/",100,200) 
-
