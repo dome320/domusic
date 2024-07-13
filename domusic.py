@@ -131,6 +131,8 @@ def play_tune(notes,ms=1000):
 # I think that C4 = 60 (Middle C), so C3 = 48
 # According to: https://inspiredacoustics.com/en/MIDI_note_numbers_and_center_frequencies
 
+
+    
 def load_cds_csv(filepath):
     note_strings = []
     with open(filepath, 'r') as file:
@@ -145,6 +147,7 @@ def load_cds_csv(filepath):
                 except ValueError:
                     # Handle the case where conversion to integer fails
                     continue
+    note_strings.append("0") 
     return note_strings    
 
 def load_cds_csv_numbers(filepath):
@@ -260,6 +263,13 @@ def train_markov_chain(notes):
     markov_chain[last_index][end_index] += 1 / flat_len
 
 notes = ["C4", "E4", "G4", "C4"]
+notes.extend(["C4", "D4", "E4", "F4", "G4", "A4", "B4", "C5"]) # C major
+notes.extend(["D4", "E4", "FS4", "G4", "A4", "B4", "CS5", "D5"])  # D major
+notes.extend(["E4", "FS4", "GS4", "A4", "B4", "CS5", "DS5", "E5"])  # E major
+notes.extend(["F4", "G4", "A4", "AS4", "C5", "D5", "E5", "F5"])  # F major
+notes.extend(["G4", "A4", "B4", "C5", "D5", "E5", "FS5", "G5"]) # G major
+notes.extend(["A4", "B4", "CS5", "D5", "E5", "FS5", "GS5", "A5"]) # A major
+notes.extend(["B4", "CS5", "DS5", "E5", "FS5", "GS5", "AS5", "B5"])  # B major
 train_markov_chain(notes)
 
 def normalize(matrix):
@@ -279,36 +289,56 @@ print(" --- Training done! ---")
 
 print(" --- Generating ---")
 
-def generate_notes(num_notes,speed):
-    start_note = 0
+def generate_notes(num_notes,speed,temp):
+    start_note = 0 
     while start_note == 0:
         start_note = numpy.random.choice(flattened_note_names)
     generated_sequence = [start_note]
     current_note = start_note
-    for i in range(num_notes):
+    for _ in range(num_notes):
         current_index = note_to_index[current_note]
+        probs = markov_chain[current_index]
+
+        #Sort probabilities
+        sorted_indices = list(reversed(numpy.argsort(probs)))
+
+        # Select next state
+        cumulative_probs = numpy.cumsum(probs[sorted_indices])
         rand_num = numpy.random.rand()
-        cumulative_probs = numpy.cumsum(markov_chain[current_index])
-        next_index = numpy.argmax(rand_num <= cumulative_probs)
-        next_note = flattened_note_names[next_index]
+        candidate_index = 0
+        for i in range (len(cumulative_probs)):
+            if rand_num >= cumulative_probs[i]:
+                candidate_index = i
+                break
+
+        # Add variability with temperature
+        mean_index = sorted_indices[candidate_index]
+        new_index = int(numpy.random.normal(mean_index, temp))
+
+        # Check bounds
+        if new_index < 0:
+            new_index = 0
+        elif new_index >= len(flattened_note_names):
+            new_index = len(flattened_note_names) - 1
+            
+        next_note = flattened_note_names[new_index]
         if next_note == "0":
             break
+
         generated_sequence.append(next_note)
         current_note = next_note
-    print(generated_sequence)
-    play_tune(generated_sequence,speed)
 
-#generate_notes(20)
+    print(generated_sequence)
+    play_tune(generated_sequence)
+
 
 print(" --- Generating done! ---")
 
-
-def run_jig(directory, num_notes,speed):
+def run_jig(directory, num_notes, speed, temp):
     all_notes = load_multiple_files(directory)
     train_markov_chain(all_notes)
     normalize(markov_chain)
     print(markov_chain)
-    generate_notes(num_notes,speed)
+    generate_notes(num_notes,speed,temp)
 
-run_jig("CSD/english/csv/",100,200) 
-
+run_jig("CSD/english/csv/",100,200, 1) 
