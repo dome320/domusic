@@ -1,12 +1,15 @@
 import h2o
 
+# http://localhost:54321/
+
 h2o.init()
 airlines = h2o.import_file("https://s3.amazonaws.com/h2o-public-test-data/smalldata/airlines/AirlinesTrain.csv")
 gbm = H2OGradientBoostingEstimator(ntrees=1)
 #gbm.train(x=["Origin", "Dest"], y="IsDepDelayed", training_frame=airlines)
 gbm.train(x=["UniqueCarrier", "Origin"], y="Dest", training_frame=airlines)
+gbm.train(x=["N_3", "N_2", "N_3"], y="NextNote", training_frame=songs)
 #tree = H2OTree(model = gbm, tree_number = 0 , tree_class = "NO")
-tree = H2OTree(model = gbm, tree_number = 0 , tree_class = "SFO")
+sfo_tree = H2OTree(model = gbm, tree_number = 0 , tree_class = "SFO")
 
 def tree_paths(node):
     if isinstance(node, h2o.tree.tree.H2OLeafNode):
