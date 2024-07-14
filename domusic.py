@@ -299,13 +299,14 @@ normalize(markov_chain)
 #print(" --- Generating ---")
 
 def generate_notes(num_notes,speed,temp,start_note="0"):
+    minimum_allowed_notes = int(num_notes/2)
     if start_note == "0":
         start_note = 0 
         while start_note == 0:
             start_note = numpy.random.choice(flattened_note_names)
     generated_sequence = [start_note]
     current_note = start_note
-    for _ in range(num_notes):
+    for n in range(num_notes):
         #print("---------- Next note:")
         current_index = note_to_index[current_note]
         #print("current_index: "+str(current_index))
@@ -342,12 +343,13 @@ def generate_notes(num_notes,speed,temp,start_note="0"):
         #print("new_index (after check): "+str(new_index))
         next_note = flattened_note_names[new_index]
         #print("next_note: "+str(next_note))
-        if next_note == "0":
-            break
-
-        generated_sequence.append(next_note)
-        current_note = next_note
-
+        # Don't allow to be too short
+        if (next_note == "0"):
+            if (n >= minimum_allowed_notes):
+                break
+        else:
+            generated_sequence.append(next_note)
+            current_note = next_note
     print(generated_sequence)
     play_tune(generated_sequence,speed)
 
@@ -371,4 +373,4 @@ def run_jig(num_notes, speed, temp, data="kids",start_note="0"):
     #print(markov_chain)
     generate_notes(num_notes,speed,temp,start_note=start_note)
 
-run_jig(100,200,0.01,data="c_scales")
+run_jig(50,200,0.0,data="c_scales")
