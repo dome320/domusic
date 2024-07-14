@@ -240,7 +240,7 @@ def midi2text(ifile,ofile):
 
 #midi2text("Fugue22.mid", "Fugue22.txt")
 
-print(" --- Training ---")
+#print(" --- Training ---")
 
 flat_len = 1+len(flattened_note_names)
 markov_chain = numpy.full((flat_len, flat_len), 1 / flat_len)
@@ -250,6 +250,7 @@ flattened_note_names.append("0") # Set the end token to be zero
 note_to_index = {note: idx for idx, note in enumerate(flattened_note_names)} 
 
 def train_markov_chain(notes):
+    #print("Training on: " + str(notes))
     global markov_chain 
     for i in range(len(notes) - 1): 
         from_note = notes[i] 
@@ -293,9 +294,9 @@ normalize(markov_chain)
 # (This will be redundant in the case that * was included in the input.)
 #print("0"+":"+str(markov_chain[note_to_index["0"]]))
 
-print(" --- Training done! ---")
+#print(" --- Training done! ---")
 
-print(" --- Generating ---")
+#print(" --- Generating ---")
 
 def generate_notes(num_notes,speed,temp,start_note="0"):
     if start_note == "0":
@@ -305,39 +306,42 @@ def generate_notes(num_notes,speed,temp,start_note="0"):
     generated_sequence = [start_note]
     current_note = start_note
     for _ in range(num_notes):
-        print("---------- Next note:")
+        #print("---------- Next note:")
         current_index = note_to_index[current_note]
-        print("current_index: "+str(current_index))
+        #print("current_index: "+str(current_index))
         probs = markov_chain[current_index]
-        print("probs: "+str(probs))
+        #print("probs: "+str(probs))
         #Sort probabilities
         sorted_indices = list(reversed(numpy.argsort(probs)))
-        print("sorted_indices: "+str(sorted_indices))
+        #print("sorted_indices: "+str(sorted_indices))
         # Select next state
         cumulative_probs = numpy.cumsum(probs[sorted_indices])
-        print("cumulative_probs: "+str(cumulative_probs))
-        rand_num = numpy.random.rand()
-        print("rand_num: "+str(rand_num))
+        #print("cumulative_probs: "+str(cumulative_probs))
+        # ******* Since they are sorted you don't need this. The top will always be the first.
+        #rand_num = numpy.random.rand()
+        rand_num = 0
+        #print("rand_num: "+str(rand_num))
         candidate_index = 0
         for i in range (len(cumulative_probs)):
             if rand_num <= cumulative_probs[i]:
                 candidate_index = i
                 break
-        print("candidate_index: "+str(candidate_index))
+        #print("candidate_index: "+str(candidate_index))
         # Add variability with temperature
         mean_index = sorted_indices[candidate_index]
-        print("mean_index: "+str(mean_index))
+        #print("mean_index: "+str(mean_index))
+        #print("temp: " + str(temp))
         new_index = int(numpy.random.normal(mean_index, temp))
-        print("new_index (pre check): "+str(new_index))
+        #print("new_index (pre check): "+str(new_index))
 
         # Check bounds
         if new_index < 0:
             new_index = 0
         elif new_index >= len(flattened_note_names):
             new_index = len(flattened_note_names) - 1
-        print("new_index (after check): "+str(new_index))
+        #print("new_index (after check): "+str(new_index))
         next_note = flattened_note_names[new_index]
-        print("next_note: "+str(next_note))
+        #print("next_note: "+str(next_note))
         if next_note == "0":
             break
 
@@ -348,7 +352,7 @@ def generate_notes(num_notes,speed,temp,start_note="0"):
     play_tune(generated_sequence,speed)
 
 
-print(" --- Generating done! ---")
+#print(" --- Generating done! ---")
 
 def run_jig(num_notes, speed, temp, data="kids",start_note="0"):
     if data == "kids":
@@ -367,4 +371,4 @@ def run_jig(num_notes, speed, temp, data="kids",start_note="0"):
     #print(markov_chain)
     generate_notes(num_notes,speed,temp,start_note=start_note)
 
-run_jig(100,200,10,data="c_scales")
+run_jig(100,200,0.01,data="c_scales")
