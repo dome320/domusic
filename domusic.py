@@ -296,32 +296,40 @@ def generate_notes(num_notes,speed,temp):
     generated_sequence = [start_note]
     current_note = start_note
     for _ in range(num_notes):
+        print("---------- Next note:")
         current_index = note_to_index[current_note]
+        print("current_index: "+str(current_index))
         probs = markov_chain[current_index]
-
+        print("probs: "+str(probs))
         #Sort probabilities
         sorted_indices = list(reversed(numpy.argsort(probs)))
+        print("sorted_indices: "+str(sorted_indices))
 
         # Select next state
         cumulative_probs = numpy.cumsum(probs[sorted_indices])
+        print("cumulative_probs: "+str(cumulative_probs))
         rand_num = numpy.random.rand()
+        print("rand_num: "+str(rand_num))
         candidate_index = 0
         for i in range (len(cumulative_probs)):
-            if rand_num >= cumulative_probs[i]:
+            if rand_num <= cumulative_probs[i]:
                 candidate_index = i
                 break
-
+        print("candidate_index: "+str(candidate_index))
         # Add variability with temperature
         mean_index = sorted_indices[candidate_index]
+        print("mean_index: "+str(mean_index))
         new_index = int(numpy.random.normal(mean_index, temp))
+        print("new_index (pre check): "+str(new_index))
 
         # Check bounds
         if new_index < 0:
             new_index = 0
         elif new_index >= len(flattened_note_names):
             new_index = len(flattened_note_names) - 1
-            
+        print("new_index (after check): "+str(new_index))
         next_note = flattened_note_names[new_index]
+        print("next_note: "+str(next_note))
         if next_note == "0":
             break
 
@@ -341,4 +349,4 @@ def run_jig(directory, num_notes, speed, temp):
     print(markov_chain)
     generate_notes(num_notes,speed,temp)
 
-run_jig("CSD/english/csv/",100,200, 1) 
+run_jig("CSD/english/csv/",10,200, 1) 
