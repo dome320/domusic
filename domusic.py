@@ -170,7 +170,7 @@ def load_multiple_files(directory="CSD/english/csv"):
     all_notes = [] 
     for filename in os.listdir(directory):
         filepath = os.path.join(directory,filename)
-        print("loading from: "+filepath)
+        #print("loading from: "+filepath)
         notes = load_cds_csv(filepath)
         all_notes.extend(notes)
     return all_notes
@@ -262,15 +262,23 @@ def train_markov_chain(notes):
     end_index = note_to_index["0"]
     markov_chain[last_index][end_index] += 1 / flat_len
 
-notes = ["C4", "E4", "G4", "C4"]
-notes.extend(["C4", "D4", "E4", "F4", "G4", "A4", "B4", "C5"]) # C major
-notes.extend(["D4", "E4", "FS4", "G4", "A4", "B4", "CS5", "D5"])  # D major
-notes.extend(["E4", "FS4", "GS4", "A4", "B4", "CS5", "DS5", "E5"])  # E major
-notes.extend(["F4", "G4", "A4", "AS4", "C5", "D5", "E5", "F5"])  # F major
-notes.extend(["G4", "A4", "B4", "C5", "D5", "E5", "FS5", "G5"]) # G major
-notes.extend(["A4", "B4", "CS5", "D5", "E5", "FS5", "GS5", "A5"]) # A major
-notes.extend(["B4", "CS5", "DS5", "E5", "FS5", "GS5", "AS5", "B5"])  # B major
-train_markov_chain(notes)
+def load_scales(ncopies=1):
+    notes = []
+    for n in range(ncopies):
+        notes.extend(["C4", "D4", "E4", "F4", "G4", "A4", "B4", "C5"]) # C major
+        notes.extend(["D4", "E4", "FS4", "G4", "A4", "B4", "CS5", "D5"])  # D major
+        notes.extend(["E4", "FS4", "GS4", "A4", "B4", "CS5", "DS5", "E5"])  # E major
+        notes.extend(["F4", "G4", "A4", "AS4", "C5", "D5", "E5", "F5"])  # F major
+        notes.extend(["G4", "A4", "B4", "C5", "D5", "E5", "FS5", "G5"]) # G major
+        notes.extend(["A4", "B4", "CS5", "D5", "E5", "FS5", "GS5", "A5"]) # A major
+        notes.extend(["B4", "CS5", "DS5", "E5", "FS5", "GS5", "AS5", "B5"])  # B major
+    return(notes)
+
+def load_c_scales(ncopies=1):
+    notes = []
+    for n in range(ncopies):
+        notes.extend(["C4", "D4", "E4", "F4", "G4", "A4", "B4", "C5"]) # C major
+    return(notes)
 
 def normalize(matrix):
     for i in range(len(matrix)):
@@ -280,19 +288,20 @@ def normalize(matrix):
 
 normalize(markov_chain)
 
-for note in notes:
-    print(note+":"+str(markov_chain[note_to_index[note]]))
+#for note in notes:
+    #print(note+":"+str(markov_chain[note_to_index[note]]))
 # (This will be redundant in the case that * was included in the input.)
-print("0"+":"+str(markov_chain[note_to_index["0"]]))
+#print("0"+":"+str(markov_chain[note_to_index["0"]]))
 
 print(" --- Training done! ---")
 
 print(" --- Generating ---")
 
-def generate_notes(num_notes,speed,temp):
-    start_note = 0 
-    while start_note == 0:
-        start_note = numpy.random.choice(flattened_note_names)
+def generate_notes(num_notes,speed,temp,start_note="0"):
+    if start_note == "0":
+        start_note = 0 
+        while start_note == 0:
+            start_note = numpy.random.choice(flattened_note_names)
     generated_sequence = [start_note]
     current_note = start_note
     for _ in range(num_notes):
@@ -304,7 +313,6 @@ def generate_notes(num_notes,speed,temp):
         #Sort probabilities
         sorted_indices = list(reversed(numpy.argsort(probs)))
         print("sorted_indices: "+str(sorted_indices))
-
         # Select next state
         cumulative_probs = numpy.cumsum(probs[sorted_indices])
         print("cumulative_probs: "+str(cumulative_probs))
@@ -337,16 +345,26 @@ def generate_notes(num_notes,speed,temp):
         current_note = next_note
 
     print(generated_sequence)
-    play_tune(generated_sequence)
+    play_tune(generated_sequence,speed)
 
 
 print(" --- Generating done! ---")
 
-def run_jig(directory, num_notes, speed, temp):
-    all_notes = load_multiple_files(directory)
+def run_jig(num_notes, speed, temp, data="kids",start_note="0"):
+    if data == "kids":
+        all_notes = load_multiple_files(directory="CSD/english/csv")
+    else:
+        if data == "all_scales":
+            all_notes = load_scales(10)
+        else:
+            if data == "c_scales":
+                all_notes = load_c_scales(10)
+                start_note = "C4"
+            else:
+                exit(data+"????")
     train_markov_chain(all_notes)
     normalize(markov_chain)
-    print(markov_chain)
-    generate_notes(num_notes,speed,temp)
+    #print(markov_chain)
+    generate_notes(num_notes,speed,temp,start_note=start_note)
 
-run_jig("CSD/english/csv/",10,200, 1) 
+run_jig(100,200,10,data="c_scales")
