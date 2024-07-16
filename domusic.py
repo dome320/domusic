@@ -6,6 +6,7 @@ import pygame, pygame.sndarray
 import csv
 import os
 import mido
+import h2o 
 
 # ================== SETUP NOTES ==================
 
@@ -416,3 +417,31 @@ def run_jig(num_notes, speed, temp, data="kids",start_note="0"):
     generate_notes(num_notes,speed,temp,start_note=start_note)
 
 run_jig(50,200,0.00,data="c_scales")
+
+# ================== H2o Tree Training ==================
+
+h2o.init()
+note_data = h2o.import_file("note_sequences.csv")
+gbm = H2OGradientBoostingEstimator(ntrees=1)
+gbm.train(x=['note_t-1', 'note_t-2'], y='label', training_frame=note_sequences)
+tree = H2OTree(model=gbm, tree_number=0)
+
+def tree_paths(node):
+    if isinstance(node, h2o.tree.tree.H2OLeafNode):
+        return [node, node.prediction]
+    else:
+        return [node, node.split_feature, [node.left_levels, tree_paths(node.left_child)], [node.right_levels, tree_paths(node.right_child)]]
+
+def traverse_tree(node, indict):
+    if isinstance(node, h2o.tree.tree.H2OLeafNode):
+        return node.prediction
+    else:
+        val = indict[node.split_feature]
+        if val in node.right_levels:
+            return traverse_tree(node.right_child, indict)
+        else:
+            return traverse_tree(node.left_child, indict)
+
+
+
+
