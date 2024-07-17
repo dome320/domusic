@@ -163,12 +163,29 @@ def load_cds_csv(filepath):
     note_strings.append("0") 
     return note_strings
 
+
+def load_cds_csv_numbers(filepath):
+    note_strings = []
+    with open(filepath, 'r') as file:
+        reader = csv.reader(file)
+        for row in reader:
+            if len(row) > 2:
+                try:
+                    number = int(row[2])
+                    note_name = get_note_name(number)
+                    if note_name:
+                        note_strings.append(number)
+                except ValueError:
+                    # Handle the case where conversion to integer fails
+                    continue
+    return note_strings
+
 def generate_dataset(directory, output_file, n=2):
     # Put notes in csv files into a list 
     all_notes = []
     for file in os.listdir(directory):
         filepath = os.path.join(directory, file)
-        notes = load_cds_csv(filepath)
+        notes = load_cds_csv_numbers(filepath)
         all_notes.extend(notes)
 
     # Make list into a dataset 
@@ -189,23 +206,6 @@ def generate_dataset(directory, output_file, n=2):
         writer.writerows(dataset)
 
 generate_dataset("CSD/english/csv", "note_sequences.csv",2)
-
-
-def load_cds_csv_numbers(filepath):
-    note_strings = []
-    with open(filepath, 'r') as file:
-        reader = csv.reader(file)
-        for row in reader:
-            if len(row) > 2:
-                try:
-                    number = int(row[2])
-                    note_name = get_note_name(number)
-                    if note_name:
-                        note_strings.append(number)
-                except ValueError:
-                    # Handle the case where conversion to integer fails
-                    continue
-    return note_strings
 
 def load_multiple_files(directory="CSD/english/csv"):
     all_notes = [] 
