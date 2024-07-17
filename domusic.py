@@ -185,6 +185,42 @@ def generate_dataset(directory, output_file, n=2):
     all_notes = []
     for file in os.listdir(directory):
         filepath = os.path.join(directory, file)
+        notes = load_cds_csv(filepath)
+        all_notes.extend(notes)
+
+    # Make list into a dataset 
+    dataset = []
+    for i in range(n, len(all_notes)):
+        features = all_notes[i-n:i]
+        label = all_notes[i]
+        dataset.append(features + [label])
+    
+    # Make dataset into csv file
+    
+    with open(output_file, 'w', newline='') as file:
+        writer = csv.writer(file)
+        # Write header
+        header = [f'note_t-{i}' for i in range(n, 0, -1)] + ['label']
+        writer.writerow(header)
+        # Write data
+        writer.writerows(dataset)
+
+#generate_dataset("CSD/english/csv", "note_sequences.csv",2)
+
+def load_multiple_files(directory="CSD/english/csv"):
+    all_notes = [] 
+    for filename in os.listdir(directory):
+        filepath = os.path.join(directory,filename)
+        #print("loading from: "+filepath)
+        notes = load_cds_csv(filepath)
+        all_notes.extend(notes)
+    return all_notes
+
+def generate_numeric_dataset(directory, output_file, n=2):
+    # Put notes in csv files into a list 
+    all_notes = []
+    for file in os.listdir(directory):
+        filepath = os.path.join(directory, file)
         notes = load_cds_csv_numbers(filepath)
         all_notes.extend(notes)
 
@@ -205,16 +241,7 @@ def generate_dataset(directory, output_file, n=2):
         # Write data
         writer.writerows(dataset)
 
-generate_dataset("CSD/english/csv", "note_sequences.csv",2)
-
-def load_multiple_files(directory="CSD/english/csv"):
-    all_notes = [] 
-    for filename in os.listdir(directory):
-        filepath = os.path.join(directory,filename)
-        #print("loading from: "+filepath)
-        notes = load_cds_csv(filepath)
-        all_notes.extend(notes)
-    return all_notes
+generate_numeric_dataset("CSD/english/csv", "note_sequences_numeric.csv",2)
 
 # Plays Joy to the World
 #print(load_cds_csv_numbers("CSD/english/csv/en022a.csv"))
@@ -416,15 +443,15 @@ def run_jig(num_notes, speed, temp, data="kids",start_note="0"):
     #print(markov_chain)
     generate_notes(num_notes,speed,temp,start_note=start_note)
 
-run_jig(50,200,0.00,data="c_scales")
+#run_jig(50,200,0.00,data="c_scales")
 
 # ================== H2o Tree Training ==================
 
-h2o.init()
-note_data = h2o.import_file("note_sequences.csv")
-gbm = H2OGradientBoostingEstimator(ntrees=1)
-gbm.train(x=['note_t-1', 'note_t-2'], y='label', training_frame=note_sequences)
-tree = H2OTree(model=gbm, tree_number=0)
+# h2o.init()
+# note_data = h2o.import_file("note_sequences.csv")
+# gbm = H2OGradientBoostingEstimator(ntrees=1)
+# gbm.train(x=['note_t-1', 'note_t-2'], y='label', training_frame=note_sequences)
+# tree = H2OTree(model=gbm, tree_number=0)
 
 def tree_paths(node):
     if isinstance(node, h2o.tree.tree.H2OLeafNode):
