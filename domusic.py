@@ -7,7 +7,7 @@ import csv
 import os
 import mido
 import h2o 
-
+from h2o.automl import H2OAutoML
 # ================== SETUP NOTES ==================
 
 # Decoder for .csv files from: https://zenodo.org/records/4916302
@@ -314,19 +314,6 @@ flattened_note_names.append("0") # Set the end token to be zero
 # dictionary corresponding to each note and its index 
 note_to_index = {note: idx for idx, note in enumerate(flattened_note_names)} 
 
-def train_markov_chain(notes):
-    #print("Training on: " + str(notes))
-    global markov_chain 
-    for i in range(len(notes) - 1): 
-        from_note = notes[i] 
-        to_note = notes[i+1]
-        from_index = note_to_index[from_note]
-        to_index = note_to_index[to_note]
-        markov_chain[from_index][to_index] += 1 / markov_table_size
-    last_note = notes[-1]
-    last_index = note_to_index[last_note]
-    end_index = note_to_index["0"]
-    markov_chain[last_index][end_index] += 1 / markov_table_size
 
 def load_scales(ncopies=1):
     notes = []
@@ -346,27 +333,6 @@ def load_c_scales(ncopies=1):
         notes.extend(["C4", "D4", "E4", "F4", "G4", "A4", "B4", "C5"]) # C major
     return(notes)
 
-# If, after training there are rows that are absolutely flat - that
-# is, notes that never have a follow-on note, the algorithm will never
-# walk away from them. In this case, we need to know, and so we make a
-# table of the rows with this property so we can randomize away from
-# them if we land one one. We call these tails.
-
-global tails
-
-def normalize(matrix):
-    global tails
-    tails = []
-    for i in range(markov_table_size):
-        total = numpy.round(numpy.sum(matrix[i]),decimals=3)
-        print("Total="+str(total))
-        matrix[i] /= total
-        if total == 1.0:
-            tail=flattened_note_names[i]
-            print("tail: "+tail)
-            tails.append(tail)
-    print("tails: "+str(tails))
-
 #for note in notes:
     #print(note+":"+str(markov_chain[note_to_index[note]]))
 # (This will be redundant in the case that * was included in the input.)
@@ -374,84 +340,20 @@ def normalize(matrix):
 
 # If start_note = "0" (default), pick a random start note.
 
-def generate_notes(num_notes,speed,temp,start_note="0"): 
-    global tails
-    minimum_allowed_notes = int(num_notes/2)
-    if start_note == "0":
-        start_note = 0 
-        while start_note == 0:
-            # WWW XXX Can choose "0" to start!
-            start_note = numpy.random.choice(flattened_note_names)
-    generated_sequence = [start_note]
-    current_note = start_note
-    for n in range(num_notes):
-        print("---------- Next note:")
-        # If there are no followers in the data, pick a random note.
-        # FFF This isn't the best fix for this. Need to think on it.
-        if current_note in tails:
-            current_note = start_note = numpy.random.choice(flattened_note_names)
-        current_index = note_to_index[current_note]
-        print("current_index: "+str(current_index))
-        probs = markov_chain[current_index]
-        print("probs: "+str(probs))
-        # Sort probabilities
-        sorted_indices = list(reversed(numpy.argsort(probs)))
-        print("sorted_indices: "+str(sorted_indices))
-        # Select next state
-        cumulative_probs = numpy.cumsum(probs[sorted_indices])
-        print("cumulative_probs: "+str(cumulative_probs))
-        mean_index = sorted_indices[0]
-        print("mean_index: "+str(mean_index))
-        print("temp: " + str(temp))
-        new_index = int(numpy.random.normal(mean_index, temp))
-        print("new_index (pre check): "+str(new_index))
-        # Check bounds
-        if new_index < 0:
-            new_index = 0
-        elif new_index > n_notes:
-            new_index = n_notes
-        print("new_index (after check): "+str(new_index))
-        next_note = flattened_note_names[new_index]
-        print("next_note: "+str(next_note))
-        # Don't allow to be too short
-        if (next_note == "0"):
-            if (n >= minimum_allowed_notes):
-                break
-        else:
-            print("Adding: "+str(next_note))
-            generated_sequence.append(next_note)
-            current_note = next_note
-    print(generated_sequence)
-    play_tune(generated_sequence,speed)
-
 #print(" --- Generating done! ---")
-
-def run_jig(num_notes, speed, temp, data="kids",start_note="0"):
-    if data == "kids":
-        all_notes = load_multiple_files(directory="CSD/english/csv")
-    else:
-        if data == "all_scales":
-            all_notes = load_scales(10)
-        else:
-            if data == "c_scales":
-                all_notes = load_c_scales(10)
-                start_note = "C4"
-            else:
-                exit(data+"????")
-    train_markov_chain(all_notes)
-    normalize(markov_chain)
-    #print(markov_chain)
-    generate_notes(num_notes,speed,temp,start_note=start_note)
-
-#run_jig(50,200,0.00,data="c_scales")
 
 # ================== H2o Tree Training ==================
 
-# h2o.init()
-# note_data = h2o.import_file("note_sequences.csv")
-# gbm = H2OGradientBoostingEstimator(ntrees=1)
-# gbm.train(x=['note_t-1', 'note_t-2'], y='label', training_frame=note_sequences)
-# tree = H2OTree(model=gbm, tree_number=0)
+h2o.init()
+train = h2o.import_file("note_sequences_numeric.csv")
+y = "label"
+x = list(train.columns)
+x.remove(y)
+aml = H2OAutoML(max_runtime_secs = 30)
+aml.train(x = x, y = y, training_frame = train)
+aml.leaderboard
+test =  h2o.import_file("note_sequences_numeric_test.csv")
+predictions=aml.predict(test)
 
 def tree_paths(node):
     if isinstance(node, h2o.tree.tree.H2OLeafNode):
@@ -460,7 +362,7 @@ def tree_paths(node):
         return [node, node.split_feature, [node.left_levels, tree_paths(node.left_child)], [node.right_levels, tree_paths(node.right_child)]]
 
 def traverse_tree(node, indict):
-    if isinstance(node, h2o.tree.tree.H2OLeafNode):
+    if isinstance(node, h2o.tree.H2OLeafNode):
         return node.prediction
     else:
         val = indict[node.split_feature]
@@ -469,6 +371,38 @@ def traverse_tree(node, indict):
         else:
             return traverse_tree(node.left_child, indict)
 
+def generate_notes_tree(num_notes,speed,temp, start_note="0"):
+    global aml
+
+    while(start_note == "0"):
+        start_note = numpy.random.choice(flattened_note_names)
+    generated_sequence = [start_note]
+    current_note = start_note
+    for i in range(num_notes):
+        if current_note == "0":
+            break
+        
+        input_dict = {}
+        for i in range(len(generated_sequence)):
+            if i >= len(x):
+                break
+            input_dict[f'note_t-{i+1}'] = note_to_index[generated_sequence[i]]
+
+        next_index = #Unsure how to find the next index? 
+        next_note = get_note_name(next_index + BASE)
+
+        if next_note == "0":
+                break
+
+        generated_sequence.append(next_note)
+        current_note = next_note
+
+    print(generated_sequence)
+    play_tune(generated_sequence, speed)
+
+def run_jig(num_notes, speed, temp, data="kids",start_note="0"):
+    #Do we even need a jig function if all of the training is done in the generate function? 
+    generate_notes_tree(num_notes,speed,temp,start_note=start_note)
 
 
 
