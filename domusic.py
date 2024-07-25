@@ -134,7 +134,6 @@ aml.leaderboard
 test =  h2o.import_file("note_sequences_numeric_test.csv")
 predictions=aml.predict(test)
 
-
 # def generate_notes_tree(num_notes,speed,temp, start_note="0"):
 #     global aml
 
