@@ -1,3 +1,6 @@
+# conda activate domusic
+# python3 markov.py
+
 from notebase import *
 
 # This is totally confusing. There are 37 notes (flattened, that is,
