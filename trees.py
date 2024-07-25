@@ -2,7 +2,7 @@
 # python3 trees.py
 
 from notebase import *
-
+import random 
 import h2o 
 from h2o.automl import H2OAutoML
 
@@ -130,39 +130,37 @@ predictions=aml.predict(test)
 
 print(str(predictions))
 
-# def generate_notes_tree(num_notes,speed,temp, start_note="0"):
-#     global aml
+def generate_notes_tree(num_notes,speed,second_note="0", first_note="0"):
+    global aml
 
-#     while(start_note == "0"):
-#         start_note = numpy.random.choice(flattened_note_names)
-#     generated_sequence = [start_note]
-#     current_note = start_note
-#     for i in range(num_notes):
-#         if current_note == "0":
-#             break
-        
-#         input_dict = {}
-#         for i in range(len(generated_sequence)):
-#             if i >= len(x):
-#                 break
-#             input_dict[f'note_t-{i+1}'] = note_to_index[generated_sequence[i]]
+    #Randomly Generate 2 Notes from 48 to 84 
+    while(second_note == "0" or first_note == "0"):
+        first_note = random.uniform(48, 84)
+        second_note == random.uniform(48, 84)
+    sequence = [first_note, second_note]
+    
+    print(f"Initial sequence: {sequence}")
+    
 
-#         next_index = #Unsure how to find the next index? 
-#         next_note = get_note_name(next_index + BASE)
+    for i in range(num_notes):
+        if(second_note == "0"):
+            break
+        input_frame = h2o.H2OFrame([[first_note, second_note]], column_names=["note_t-2", "note_t-1"])  
+        next_note = aml.predict(input_frame).as_data_frame().iloc[0, 0]  
 
-#         if next_note == "0":
-#                 break
+        first_note = second_note
+        second_note = next_note
 
-#         generated_sequence.append(next_note)
-#         current_note = next_note
+        print(f"Step {i+1}: {sequence}")
 
-#     print(generated_sequence)
-#     play_tune(generated_sequence, speed)
+    for i in sequence:
+        i = get_note_name(i)
 
-# def run_jig(num_notes, speed, temp, data="kids",start_note="0"):
-#     #Do we even need a jig function if all of the training is done in the generate function? 
-#     generate_notes_tree(num_notes,speed,temp,start_note=start_note)
+    print(sequence)
+    play_tune(sequence,speed) 
 
+generate_notes_tree(30, 200)
+    
 
 
 
