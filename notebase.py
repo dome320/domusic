@@ -4,6 +4,7 @@ import pygame, pygame.sndarray
 import csv
 import os
 import mido
+import random 
 
 # ================== GLOBAL NOTE TABLES ==================
 
@@ -266,5 +267,4 @@ global note_to_index
 note_to_index = {note: idx for idx, note in enumerate(flattened_note_names)} 
 
 print(" --- Loaded notebase.py! ---")
-
 
