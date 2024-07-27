@@ -65,8 +65,7 @@ def tRound(prediction, temp):
         return round(prediction)
 
     else:
-         random_factor = random.uniform(0,1)
-         adjustment = (random_factor - 0.5) * temp
+         adjustment = numpy.random.normal(scale=temp)
          new_prediction = prediction + adjustment
          return round(new_prediction)
 
