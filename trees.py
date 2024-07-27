@@ -95,8 +95,9 @@ def generate_notes_tree(num_notes,speed,temp,second_note="0", first_note="0"):
     print(note_sequence)
     play_tune(note_sequence,speed) 
 
-generate_notes_tree(30, 200, 2)
-    
+for i in range(8):
+    print("-----------------",str(i/4.0),"-----------------")
+    generate_notes_tree(30, 200, i/4.0)
 
 
 
