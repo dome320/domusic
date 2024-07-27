@@ -5,7 +5,7 @@
 # from treeutils import * 
 
 from notebase import *
-
+import random 
 import h2o 
 from h2o.automl import H2OAutoML
 
@@ -59,7 +59,18 @@ aml.leaderboard
 #predictions=aml.predict(test)
 #print(str(predictions))
 
-def generate_notes_tree(num_notes,speed,second_note="0", first_note="0"):
+
+def tRound(prediction, temp):
+    if temp == 0.0:
+        return round(prediction)
+
+    else:
+         random_factor = random.uniform(0,1)
+         adjustment = (random_factor - 0.5) * temp
+         new_prediction = prediction + adjustment
+         return round(new_prediction)
+
+def generate_notes_tree(num_notes,speed,temp,second_note="0", first_note="0"):
     global aml
 
     #Randomly Generate 2 Notes from 48 to 84 
@@ -76,7 +87,7 @@ def generate_notes_tree(num_notes,speed,second_note="0", first_note="0"):
             break
         input_frame = h2o.H2OFrame([[first_note, second_note]], column_names=["note_t-2", "note_t-1"])  
         #next_note = aml.predict(input_frame).as_data_frame().iloc[0, 0]
-        next_note = round(aml.predict(input_frame)[0,0])
+        next_note = tRound(aml.predict(input_frame)[0,0], temp)
         sequence.append(next_note)
         first_note = round(second_note)
         second_note = round(next_note)
@@ -85,9 +96,8 @@ def generate_notes_tree(num_notes,speed,second_note="0", first_note="0"):
     print(note_sequence)
     play_tune(note_sequence,speed) 
 
-generate_notes_tree(30, 200)
+generate_notes_tree(30, 200, 2)
     
-
 
 
 
