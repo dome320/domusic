@@ -47,7 +47,7 @@ h2o.init()
 
 # ================== Tree Training ================== 
 
-train = h2o.import_file("note_sequences_numeric.csv")
+train = h2o.import_file("note_sequences_3.csv")
 y = "label"
 x = list(train.columns)
 x.remove(y)
@@ -69,27 +69,30 @@ def tRound(prediction, temp):
          new_prediction = prediction + adjustment
          return round(new_prediction)
 
-def generate_notes_tree(num_notes,speed,temp,second_note="0", first_note="0"):
+        
+def generate_notes_tree(num_notes, speed, temp, third_note="0", second_note="0", first_note="0"):
     global aml
 
     #Randomly Generate 2 Notes from 48 to 84 
 
-    while(second_note == "0" or first_note == "0"):
+    while(second_note == "0" or first_note == "0" or third_note == "0"):
         first_note = round(random.uniform(48, 84))
         second_note = round(random.uniform(48, 84))
-    sequence = [first_note, second_note]
+        third_note = round(random.uniform(48,84)) 
+    sequence = [third_note, second_note, first_note]
     
     print(f"Initial sequence: {sequence}")
 
     for i in range(num_notes):
         if(second_note == "0"):
             break
-        input_frame = h2o.H2OFrame([[first_note, second_note]], column_names=["note_t-2", "note_t-1"])  
+        input_frame = h2o.H2OFrame([[third_note, second_note, first_note]], column_names=["note_t-3", "note_t-2", "note_t-1"])  
         #next_note = aml.predict(input_frame).as_data_frame().iloc[0, 0]
         next_note = tRound(aml.predict(input_frame)[0,0], temp)
         sequence.append(next_note)
-        first_note = round(second_note)
-        second_note = round(next_note)
+        third_note = round(second_note) 
+        second_note = round(first_note)
+        first_note = round(next_note)
     print(sequence)
     note_sequence = [get_note_name(i) for i in sequence]
     print(note_sequence)
