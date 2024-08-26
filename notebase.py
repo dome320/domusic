@@ -4,6 +4,7 @@ import pygame, pygame.sndarray
 import csv
 import os
 import mido
+import time 
 
 # ================== GLOBAL NOTE TABLES ==================
 
@@ -112,6 +113,42 @@ def play_tune(notes,ms=1000):
             play_for(sum([sine_wave(note2freq[note], 4096) for note in note]), ms)
         else:
             raise Exception(note)
+def play_tune(voices, ms=1000, play_individual=False):
+    global note2freq
+    
+    sample_rate = 44100
+    
+    if play_individual:
+        # Play each voice individually
+        for voice in voices:
+            for note in voice:
+                if isinstance(note, str):
+                    play_for(sine_wave(note2freq[note], 4096), ms)
+                elif isinstance(note, list):
+                    play_for(sum([sine_wave(note2freq[note], 4096) for note in note]), ms)
+                else:
+                    raise Exception(f"Unknown note format: {note}")
+            time.sleep(1)  # Pause between voices
+    else:
+        # Play all voices together by combining waveforms
+        for i in range(min(len(voice) for voice in voices)):
+            notes = [voice[i] for voice in voices if i < len(voice)]
+            combined_wave = numpy.zeros(sample_rate, dtype=numpy.float32)
+            
+            for note in notes:
+                if isinstance(note, str):
+                    combined_wave += sine_wave(note2freq[note], 4096).astype(numpy.float32)
+                elif isinstance(note, list):
+                    combined_wave += sum([sine_wave(note2freq[n], 4096).astype(numpy.float32) for n in note])
+                else:
+                    raise Exception(f"Unknown note format: {note}")
+            
+            # Normalize the combined wave to prevent clipping
+            combined_wave /= len(notes)
+            combined_wave = numpy.clip(combined_wave, -32767, 32767).astype(numpy.int16)
+            play_for(combined_wave, ms)
+
+
 
 #play_tune(["C4","C4","D4","C4","F4","E4","C4","C4","D4","C4","G4","F4"],300)
 #play_tune(["C4", ["C4", "E4", "G4"], "D4"], 300)
